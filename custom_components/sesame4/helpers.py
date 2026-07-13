@@ -24,12 +24,13 @@ class CHSesame2MechStatus:
 
         self._data = data
         self._batteryVoltage = int.from_bytes(data[0:2], "little") * 7.2 / 1023
-        self._target = int.from_bytes(data[2:4], "little", signed=True)
-        self._position = int.from_bytes(data[4:6], "little", signed=True)
+        _raw_target = int.from_bytes(data[2:4], "little", signed=True)
+        self._target: Optional[int] = None if _raw_target == -32768 else int(_raw_target * 360 / 1024)
+        self._position = int(int.from_bytes(data[4:6], "little", signed=True) * 360 / 1024)
         self._retcode = data[6]
-        self._isInLockRange = data[7] & 2 > 0
-        self._isInUnlockRange = data[7] & 4 > 0
-        self._isBatteryCritical = data[7] & 32 > 0
+        self._isInLockRange = (data[7] & 2) != 0
+        self._isInUnlockRange = (data[7] & 4) != 0
+        self._isBatteryCritical = (data[7] & 32) != 0
 
     def getBatteryVoltage(self) -> float:
         return self._batteryVoltage
@@ -51,7 +52,7 @@ class CHSesame2MechStatus:
 
         return 0
 
-    def getTarget(self) -> int:
+    def getTarget(self) -> Optional[int]:
         return self._target
 
     def getPosition(self) -> int:
@@ -86,8 +87,8 @@ class CHSesame2MechSettings:
         else:
             raise TypeError("Invalid mech settings data")
 
-        self._lockPosition = int.from_bytes(data[0:2], "little", signed=True)
-        self._unlockPosition = int.from_bytes(data[2:4], "little", signed=True)
+        self._lockPosition = int(int.from_bytes(data[0:2], "little", signed=True) * 360 / 1024)
+        self._unlockPosition = int(int.from_bytes(data[2:4], "little", signed=True) * 360 / 1024)
 
     @property
     def isConfigured(self) -> bool:
