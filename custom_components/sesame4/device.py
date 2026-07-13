@@ -64,6 +64,8 @@ class Sesame4Device:
         self._callbacks: list[Callable[[], None]] = []
         self._lock = asyncio.Lock()
         self._logged_in = asyncio.Event()
+        self._reconnect_task: Optional[asyncio.Task] = None
+        self._shutting_down = False
 
     @property
     def address(self) -> str:
@@ -101,6 +103,7 @@ class Sesame4Device:
 
     async def connect_and_login(self) -> None:
         from bleak import BleakClient
+        from bleak_retry_connector import establish_connection
         from homeassistant.components.bluetooth import async_ble_device_from_address
 
         self._state = STATE_CONNECTING
@@ -109,9 +112,13 @@ class Sesame4Device:
         ble_device = async_ble_device_from_address(
             self._hass, self._address, connectable=True
         )
-        self._client = BleakClient(ble_device or self._address)
-        self._client.set_disconnected_callback(self._on_disconnect)
-        await self._client.connect()
+        self._client = await establish_connection(
+            BleakClient,
+            ble_device or self._address,
+            self._address,
+            disconnected_callback=self._on_disconnect,
+            max_attempts=3,
+        )
 
         LOGGER.info("Connected to %s", self._address)
         self._state = STATE_LOGIN
@@ -130,7 +137,37 @@ class Sesame4Device:
         LOGGER.warning("Disconnected from %s", self._address)
         self._state = STATE_DISCONNECTED
         self._logged_in.clear()
+        self._cipher = None
+        self._sesame_token = None
+        self._rx_buffer = BleReceiver()
         self._notify_update()
+        if not self._shutting_down:
+            self._schedule_reconnect()
+
+    def _schedule_reconnect(self) -> None:
+        if self._reconnect_task is not None and not self._reconnect_task.done():
+            return
+        self._reconnect_task = self._hass.async_create_background_task(
+            self._reconnect(),
+            f"sesame4_reconnect_{self._address}",
+        )
+
+    async def _reconnect(self) -> None:
+        for attempt in range(10):
+            delay = min(2 ** attempt, 60)
+            LOGGER.info("Reconnect attempt %d in %ds", attempt + 1, delay)
+            await asyncio.sleep(delay)
+            if self._shutting_down:
+                return
+            try:
+                await self.connect_and_login()
+                await asyncio.wait_for(self._logged_in.wait(), timeout=15.0)
+                LOGGER.info("Reconnected to %s", self._address)
+                return
+            except Exception:
+                LOGGER.warning(
+                    "Reconnect attempt %d failed", attempt + 1)
+        LOGGER.error("Failed to reconnect after 10 attempts")
 
     async def _transmit(self) -> None:
         if self._tx_buffer is None:
@@ -282,6 +319,9 @@ class Sesame4Device:
             await self.lock(tag)
 
     async def disconnect(self) -> None:
+        self._shutting_down = True
+        if self._reconnect_task is not None and not self._reconnect_task.done():
+            self._reconnect_task.cancel()
         if self._client and self._client.is_connected:
             try:
                 await self._client.stop_notify(RX_UUID)
