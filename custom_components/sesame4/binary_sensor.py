@@ -48,7 +48,7 @@ class Sesame4LockStateSensor(BinarySensorEntity):
         status = self._device.mech_status
         if status is None:
             return None
-        return status.isLocked()
+        return not status.isLocked()
 
     @callback
     def _on_device_update(self) -> None:
