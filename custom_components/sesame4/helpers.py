@@ -142,10 +142,10 @@ class CHProductModel:
 
 
 class BLEAdvertisement:
-    def __init__(self, dev, manufacturer_data: dict) -> None:
+    def __init__(self, dev, manufacturer_data: dict, rssi: int = -100) -> None:
         self._address = dev.address
         self._device = dev
-        self._rssi = dev.rssi
+        self._rssi = rssi
         self._advBytes = next(iter(manufacturer_data.values()))
         self._product_type = self._advBytes[0]
         self._isRegistered = (self._advBytes[2] & 1) > 0

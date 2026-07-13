@@ -30,31 +30,63 @@ LOGGER = logging.getLogger(__name__)
 
 def _scan_sesame_devices(hass) -> list[dict[str, Any]]:
     devices: list[dict[str, Any]] = []
+    all_ble = list(async_discovered_service_info(hass))
+    LOGGER.debug("BLE scan: %d total devices known to HA", len(all_ble))
 
-    for discovery_info in async_discovered_service_info(hass):
-        if SERVICE_UUID not in discovery_info.advertisement.service_uuids:
+    for discovery_info in all_ble:
+        svc_uuids = discovery_info.advertisement.service_uuids
+        name = discovery_info.device.name or "(no name)"
+        LOGGER.debug(
+            "BLE scan: checking %s (%s) svc_uuids=%s",
+            name, discovery_info.address, svc_uuids,
+        )
+
+        if SERVICE_UUID not in svc_uuids:
+            LOGGER.debug("BLE scan: skipping %s - service UUID not present", name)
             continue
 
         manufacturer_data = discovery_info.advertisement.manufacturer_data
         if not manufacturer_data:
+            LOGGER.debug("BLE scan: skipping %s - no manufacturer data", name)
             continue
+
+        LOGGER.debug(
+            "BLE scan: manufacturer_data for %s: %s",
+            name, {k: v.hex() for k, v in manufacturer_data.items()},
+        )
 
         try:
             adv = BLEAdvertisement(
                 discovery_info.device,
                 manufacturer_data,
+                discovery_info.rssi,
             )
-        except Exception:
+        except Exception as exc:
+            LOGGER.warning(
+                "BLE scan: failed to parse BLE advertisement for %s: %s",
+                name, exc,
+            )
             continue
 
+        LOGGER.debug(
+            "BLE scan: %s parsed - productType=%s registered=%s",
+            name, adv.productType, adv.isRegistered,
+        )
+
         if not adv.isRegistered:
+            LOGGER.debug("BLE scan: skipping %s - not registered", name)
             continue
 
         try:
             model = CHProductModel.getByValue(adv.productType)
         except NotImplementedError:
+            LOGGER.debug(
+                "BLE scan: skipping %s - unsupported productType %s",
+                name, adv.productType,
+            )
             continue
 
+        LOGGER.info("BLE scan: found %s - %s", name, model.displayName)
         devices.append(
             {
                 CONF_ADDRESS: adv.address,
@@ -65,6 +97,7 @@ def _scan_sesame_devices(hass) -> list[dict[str, Any]]:
             }
         )
 
+    LOGGER.info("BLE scan: %d Sesame device(s) found", len(devices))
     return devices
 
 
@@ -201,6 +234,7 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             adv = BLEAdvertisement(
                 discovery_info.device,
                 manufacturer_data,
+                discovery_info.rssi,
             )
         except Exception:
             return self.async_abort(reason="not_supported")
