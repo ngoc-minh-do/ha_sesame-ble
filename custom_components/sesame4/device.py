@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import algorithms
+from cryptography.exceptions import InvalidTag
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -239,7 +240,14 @@ class Sesame4Device:
         elif comm_type == BleCommunicationType.ciphertext:
             if self._cipher is None:
                 return
-            notify = BleNotify(self._cipher.decrypt(rawdata))
+            try:
+                notify = BleNotify(self._cipher.decrypt(rawdata))
+            except InvalidTag:
+                LOGGER.warning("Cipher stale, reconnecting")
+                await self._client.disconnect()
+                await self.connect_and_login()
+                await self.login()
+                return
         else:
             return
 
