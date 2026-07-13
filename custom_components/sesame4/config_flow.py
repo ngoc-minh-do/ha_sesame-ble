@@ -7,11 +7,12 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from bleak import BleakScanner
-from bleak.backends.device import BLEDevice
 
 from homeassistant import config_entries
-from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
+from homeassistant.components.bluetooth import (
+    BluetoothServiceInfoBleak,
+    async_discovered_service_info,
+)
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
@@ -27,32 +28,32 @@ from .helpers import CHProductModel, BLEAdvertisement
 LOGGER = logging.getLogger(__name__)
 
 
-async def _scan_sesame_devices() -> list[dict[str, Any]]:
+def _scan_sesame_devices(hass) -> list[dict[str, Any]]:
     devices: list[dict[str, Any]] = []
 
-    discovered = await BleakScanner.discover(timeout=5.0, return_adv=True)
-
-    for dev, adv_data in discovered.values():
-        if not dev.name:
+    for discovery_info in async_discovered_service_info(hass):
+        if SERVICE_UUID not in discovery_info.advertisement.service_uuids:
             continue
 
-        service_uuids = adv_data.service_uuids or []
-        if SERVICE_UUID not in service_uuids:
-            continue
-
-        manufacturer_data = adv_data.manufacturer_data
+        manufacturer_data = discovery_info.advertisement.manufacturer_data
         if not manufacturer_data:
             continue
 
         try:
-            adv = BLEAdvertisement(dev, manufacturer_data)
+            adv = BLEAdvertisement(
+                discovery_info.device,
+                manufacturer_data,
+            )
         except Exception:
             continue
 
         if not adv.isRegistered:
             continue
 
-        model = CHProductModel.getByValue(adv.productType)
+        try:
+            model = CHProductModel.getByValue(adv.productType)
+        except NotImplementedError:
+            continue
 
         devices.append(
             {
@@ -86,41 +87,34 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             return await self.async_step_secret()
 
-        try:
-            devices = await _scan_sesame_devices()
-        except Exception as err:
-            LOGGER.exception("BLE scan failed")
-            errors["base"] = "scan_failed"
+        devices = _scan_sesame_devices(self.hass)
 
-        if not errors and not devices:
+        if not devices:
             return self.async_abort(reason="no_devices_found")
 
-        if not errors:
-            self._discovered_devices = {d[CONF_ADDRESS]: d for d in devices}
+        self._discovered_devices = {d[CONF_ADDRESS]: d for d in devices}
 
-            options = [
-                {"value": d[CONF_ADDRESS], "label": d["name"]}
-                for d in devices
-            ]
+        options = [
+            {"value": d[CONF_ADDRESS], "label": d["name"]}
+            for d in devices
+        ]
 
-            data_schema = vol.Schema(
-                {
-                    vol.Required(CONF_ADDRESS): SelectSelector(
-                        SelectSelectorConfig(
-                            options=options,
-                            mode=SelectSelectorMode.DROPDOWN,
-                        )
-                    ),
-                }
-            )
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_ADDRESS): SelectSelector(
+                    SelectSelectorConfig(
+                        options=options,
+                        mode=SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            }
+        )
 
-            return self.async_show_form(
-                step_id="user",
-                data_schema=data_schema,
-                errors=errors,
-            )
-
-        return self.async_show_form(step_id="user", errors=errors)
+        return self.async_show_form(
+            step_id="user",
+            data_schema=data_schema,
+            errors=errors,
+        )
 
     async def async_step_secret(
         self, user_input: dict[str, Any] | None = None
@@ -178,7 +172,7 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, address: str, secret_key: str
     ) -> dict[str, str]:
         errors: dict[str, str] = {}
-        device = Sesame4Device(address, secret_key)
+        device = Sesame4Device(address, secret_key, self.hass)
 
         try:
             await device.connect_and_login()

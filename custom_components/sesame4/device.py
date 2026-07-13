@@ -1,12 +1,17 @@
 """Sesame 4 BLE device - connection, login, lock/unlock operations."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from datetime import datetime
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import algorithms
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 from .const import (
     RX_UUID,
@@ -39,10 +44,11 @@ STATE_READY = "ready"
 
 
 class Sesame4Device:
-    def __init__(self, address: str, secret_key: str) -> None:
+    def __init__(self, address: str, secret_key: str, hass: HomeAssistant) -> None:
         self._address = address
         self._secret_key = bytes.fromhex(secret_key)
         self._device_id: Optional[str] = None
+        self._hass = hass
 
         self._client = None
         self._cipher: Optional[BleCipher] = None
@@ -95,11 +101,15 @@ class Sesame4Device:
 
     async def connect_and_login(self) -> None:
         from bleak import BleakClient
+        from homeassistant.components.bluetooth import async_ble_device_from_address
 
         self._state = STATE_CONNECTING
         LOGGER.debug("Connecting to %s", self._address)
 
-        self._client = BleakClient(self._address)
+        ble_device = async_ble_device_from_address(
+            self._hass, self._address, connectable=True
+        )
+        self._client = BleakClient(ble_device or self._address)
         self._client.set_disconnected_callback(self._on_disconnect)
         await self._client.connect()
 
