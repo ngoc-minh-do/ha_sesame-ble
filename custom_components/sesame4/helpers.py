@@ -217,11 +217,9 @@ class BleTransmitter:
         else:
             packet_type = BlePacketType.NotStart
 
-        comm_type = (
-            self._segment_type if remaining == 0 else BleCommunicationType(BlePacketType.APPEND_ONLY.value)
-        )
+        comm_bits = self._segment_type.value if remaining == 0 else BlePacketType.APPEND_ONLY.value
 
-        header = bytes([packet_type.value | (comm_type.value << 1)])
+        header = bytes([packet_type.value | (comm_bits << 1)])
         return header + chunk
 
 
