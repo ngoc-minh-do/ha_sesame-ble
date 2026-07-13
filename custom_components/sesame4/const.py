@@ -7,6 +7,7 @@ DOMAIN = "sesame4"
 CONF_ADDRESS = "address"
 CONF_DEVICE_ID = "device_id"
 CONF_SECRET_KEY = "secret_key"
+CONF_PUBLIC_KEY = "public_key"
 CONF_MODEL = "model"
 
 SERVICE_UUID = "0000fd81-0000-1000-8000-00805f9b34fb"

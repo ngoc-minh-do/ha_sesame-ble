@@ -313,3 +313,14 @@ class BleResponse:
     @property
     def payload(self) -> bytes:
         return self._payload
+
+
+def decode_sk(sk_base64: str) -> tuple[str, str]:
+    data = base64.b64decode(sk_base64)
+    if len(data) < 81:
+        raise ValueError(
+            f"SK data too short: {len(data)} bytes, expected at least 81"
+        )
+    secret = data[1:17].hex()
+    pubkey = data[17:81].hex()
+    return secret, pubkey

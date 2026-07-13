@@ -21,9 +21,9 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .const import CONF_DEVICE_ID, CONF_MODEL, CONF_SECRET_KEY, DOMAIN, SERVICE_UUID
+from .const import CONF_DEVICE_ID, CONF_MODEL, CONF_PUBLIC_KEY, CONF_SECRET_KEY, DOMAIN, SERVICE_UUID
 from .device import Sesame4Device
-from .helpers import CHProductModel, BLEAdvertisement
+from .helpers import CHProductModel, BLEAdvertisement, decode_sk
 
 LOGGER = logging.getLogger(__name__)
 
@@ -155,21 +155,20 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            secret_key = user_input[CONF_SECRET_KEY].strip().replace(" ", "")
+            sk_value = user_input[CONF_SECRET_KEY].strip()
 
-            if len(secret_key) != 32:
-                errors[CONF_SECRET_KEY] = "invalid_key_length"
+            try:
+                secret_hex, pubkey_hex = decode_sk(sk_value)
+            except Exception:
+                errors[CONF_SECRET_KEY] = "invalid_sk"
             else:
-                try:
-                    bytes.fromhex(secret_key)
-                except ValueError:
-                    errors[CONF_SECRET_KEY] = "invalid_hex"
-                else:
-                    if not errors:
-                        device_info = self._selected_device or {}
-                        errors = await self._test_connection(
-                            device_info.get(CONF_ADDRESS, ""), secret_key
-                        )
+                if not errors:
+                    device_info = self._selected_device or {}
+                    errors = await self._test_connection(
+                        device_info.get(CONF_ADDRESS, ""),
+                        secret_hex,
+                        pubkey_hex,
+                    )
 
             if not errors and self._selected_device is not None:
                 return self.async_create_entry(
@@ -177,7 +176,8 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         CONF_ADDRESS: self._selected_device[CONF_ADDRESS],
                         CONF_DEVICE_ID: self._selected_device[CONF_DEVICE_ID],
-                        CONF_SECRET_KEY: secret_key,
+                        CONF_SECRET_KEY: secret_hex,
+                        CONF_PUBLIC_KEY: pubkey_hex,
                         CONF_MODEL: self._selected_device[CONF_MODEL],
                     },
                 )
@@ -202,10 +202,10 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _test_connection(
-        self, address: str, secret_key: str
+        self, address: str, secret_key: str, public_key: str
     ) -> dict[str, str]:
         errors: dict[str, str] = {}
-        device = Sesame4Device(address, secret_key, self.hass)
+        device = Sesame4Device(address, secret_key, public_key, self.hass)
 
         try:
             await device.connect_and_login()

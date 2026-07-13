@@ -44,16 +44,16 @@ STATE_READY = "ready"
 
 
 class Sesame4Device:
-    def __init__(self, address: str, secret_key: str, hass: HomeAssistant) -> None:
+    def __init__(self, address: str, secret_key: str, public_key: str, hass: HomeAssistant) -> None:
         self._address = address
         self._secret_key = bytes.fromhex(secret_key)
+        self._sesame_pk: bytes = bytes.fromhex(public_key)
         self._device_id: Optional[str] = None
         self._hass = hass
 
         self._client = None
         self._cipher: Optional[BleCipher] = None
         self._sesame_token: Optional[bytes] = None
-        self._sesame_pk: Optional[bytes] = None
         self._rx_buffer = BleReceiver()
         self._tx_buffer: Optional[BleTransmitter] = None
 

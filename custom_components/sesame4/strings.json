@@ -9,18 +9,17 @@
                 }
             },
             "secret": {
-                "title": "Secret Key",
-                "description": "Enter the 16-byte hex secret key for: {device}",
+                "title": "SK Key",
+                "description": "Paste the full SK value from the Sesame QR code URL for: {device}",
                 "data": {
-                    "secret_key": "Secret Key (32 hex characters)"
+                    "secret_key": "SK value (base64 string from QR code)"
                 }
             }
         },
         "error": {
             "cannot_connect": "Failed to connect to the device. Check that it is in range.",
             "timeout": "Connection timed out. Make sure the device is nearby and powered on.",
-            "invalid_key_length": "Secret key must be exactly 32 hex characters (16 bytes).",
-            "invalid_hex": "Secret key must contain only hex characters (0-9, a-f).",
+            "invalid_sk": "Invalid SK value. Make sure to copy the full 'sk' parameter from the QR code URL.",
             "scan_failed": "Bluetooth scan failed. Check your Bluetooth adapter.",
             "unknown": "An unexpected error occurred."
         },
