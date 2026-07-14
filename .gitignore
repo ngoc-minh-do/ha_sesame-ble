@@ -17,3 +17,6 @@ venv/
 *.egg-info/
 dist/
 build/
+
+
+NOTE.md
