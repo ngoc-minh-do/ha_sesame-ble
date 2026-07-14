@@ -72,6 +72,14 @@ class SesameDevice:
         return self._address
 
     @property
+    def is_connected(self) -> bool:
+        return self._client is not None and self._client.is_connected
+
+    @property
+    def session_stale(self) -> bool:
+        return self._session_stale
+
+    @property
     def device_id(self) -> Optional[str]:
         return self._device_id
 
@@ -102,11 +110,8 @@ class SesameDevice:
         from bleak_retry_connector import establish_connection
         from homeassistant.components.bluetooth import async_ble_device_from_address
 
-        connected = self._client.is_connected if self._client else None
-        stale = self._session_stale
-
         self._state = STATE_CONNECTING
-        LOGGER.debug("Connecting to %s: is_connected=%s, stale=%s", self._address, connected, stale)
+        LOGGER.debug("Connecting to %s: is_connected=%s, stale=%s", self._address, self.is_connected, self.session_stale)
 
         ble_device = async_ble_device_from_address(
             self._hass, self._address, connectable=True
@@ -298,7 +303,7 @@ class SesameDevice:
             await self.lock(tag)
 
     async def disconnect(self) -> None:
-        if self._client and self._client.is_connected:
+        if self.is_connected:
             try:
                 await self._client.stop_notify(RX_UUID)
             except Exception:

@@ -83,8 +83,8 @@ class SesameCoordinator:
 
     async def _ensure_connected(self) -> None:
         async with self._connection_lock:
-            connected = self._device._client.is_connected if self._device._client else False
-            stale = self._device._session_stale
+            connected = self._device.is_connected
+            stale = self._device.session_stale
             LOGGER.debug("ensure_connected: is_connected=%s, stale=%s", connected, stale)
             if connected and not stale:
                 return
