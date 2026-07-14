@@ -163,6 +163,7 @@ class Sesame4Device:
         await self._transmit()
 
     async def login(self, remote_pubkey: Optional[bytes] = None) -> None:
+        LOGGER.debug("Attempting login for %s", self._address)
         async with self._lock:
             if self._state == STATE_READY:
                 return
