@@ -24,6 +24,7 @@
             "unknown": "An unexpected error occurred."
         },
         "abort": {
+            "already_configured": "This device is already configured",
             "no_devices_found": "No Sesame devices found. Make sure your lock is nearby and has Bluetooth enabled.",
             "not_supported": "This device is not a supported Sesame model.",
             "not_registered": "This device has not been set up. Please configure it using the official Sesame app first."
