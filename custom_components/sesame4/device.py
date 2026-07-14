@@ -65,6 +65,7 @@ class Sesame4Device:
         self._callbacks: list[Callable[[], None]] = []
         self._lock = asyncio.Lock()
         self._logged_in = asyncio.Event()
+        self._session_stale = False
 
     @property
     def address(self) -> str:
@@ -101,8 +102,11 @@ class Sesame4Device:
         from bleak_retry_connector import establish_connection
         from homeassistant.components.bluetooth import async_ble_device_from_address
 
+        connected = self._client.is_connected if self._client else None
+        stale = self._session_stale
+
         self._state = STATE_CONNECTING
-        LOGGER.debug("Connecting to %s", self._address)
+        LOGGER.debug("Connecting to %s: is_connected=%s, stale=%s", self._address, connected, stale)
 
         ble_device = async_ble_device_from_address(
             self._hass, self._address, connectable=True
@@ -212,9 +216,12 @@ class Sesame4Device:
                 notify = BleNotify(self._cipher.decrypt(rawdata))
             except InvalidTag:
                 LOGGER.debug("Skipping stale encrypted notification")
+                self._session_stale = True
                 return
         else:
             return
+
+        self._session_stale = False
 
         if notify.notifyOpCode == BleOpCode.publish:
             publish = BlePublish(notify.payload)

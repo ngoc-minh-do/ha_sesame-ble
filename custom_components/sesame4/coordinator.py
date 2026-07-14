@@ -83,8 +83,12 @@ class Sesame4Coordinator:
 
     async def _ensure_connected(self) -> None:
         async with self._connection_lock:
-            if self._device._client is not None and self._device._client.is_connected:
+            connected = self._device._client.is_connected if self._device._client else False
+            stale = self._device._session_stale
+            LOGGER.debug("ensure_connected: is_connected=%s, stale=%s", connected, stale)
+            if connected and not stale:
                 return
+            LOGGER.debug("ensure_connected: connecting fresh")
             try:
                 await self._device.connect_and_login()
                 await asyncio.wait_for(self._device.login(), timeout=15.0)
@@ -124,10 +128,13 @@ class Sesame4Coordinator:
 
     async def refresh_status(self) -> None:
         if self._connection_lock.locked():
+            LOGGER.debug("refresh_status: skipped (lock held)")
             return
         try:
+            LOGGER.debug("refresh_status: connecting")
             await self._ensure_connected()
         except Exception:
+            LOGGER.debug("refresh_status: failed")
             return
         finally:
             await self._device.disconnect()
