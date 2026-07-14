@@ -90,8 +90,8 @@ class SesameCoordinator:
                 return
             LOGGER.debug("ensure_connected: connecting fresh")
             try:
-                await self._device.connect_and_login()
-                await asyncio.wait_for(self._device.login(), timeout=LOGIN_TIMEOUT)
+                await self._device.connect()
+                await asyncio.wait_for(self._device.authenticate(), timeout=LOGIN_TIMEOUT)
                 self._failure_count = 0
                 self._set_available()
             except Exception:
@@ -104,8 +104,8 @@ class SesameCoordinator:
                 raise
 
     async def initial_connect(self) -> None:
-        await self._device.connect_and_login()
-        await asyncio.wait_for(self._device.login(), timeout=LOGIN_TIMEOUT)
+        await self._device.connect()
+        await asyncio.wait_for(self._device.authenticate(), timeout=LOGIN_TIMEOUT)
 
     async def lock(self, tag: str = "HA") -> None:
         await self._ensure_connected()

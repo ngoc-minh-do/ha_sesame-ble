@@ -208,8 +208,8 @@ class SesameBleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device = SesameDevice(address, secret_key, public_key, self.hass)
 
         try:
-            await device.connect_and_login()
-            await asyncio.wait_for(device.login(), timeout=LOGIN_TIMEOUT)
+            await device.connect()
+            await asyncio.wait_for(device.authenticate(), timeout=LOGIN_TIMEOUT)
         except asyncio.TimeoutError:
             errors["base"] = "timeout"
         except Exception:

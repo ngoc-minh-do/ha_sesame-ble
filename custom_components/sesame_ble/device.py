@@ -1,4 +1,4 @@
-"""Sesame BLE device - connection, login, lock/unlock operations."""
+"""Sesame BLE device - connection, authentication, lock/unlock operations."""
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ class SesameDevice:
             except Exception:
                 LOGGER.exception("Error in update callback")
 
-    async def connect_and_login(self) -> None:
+    async def connect(self) -> None:
         from bleak import BleakClient
         from bleak_retry_connector import establish_connection
         from homeassistant.components.bluetooth import async_ble_device_from_address
@@ -162,16 +162,16 @@ class SesameDevice:
         self._tx_buffer = BleTransmitter(is_cipher, packet_data)
         await self._transmit()
 
-    async def login(self, remote_pubkey: Optional[bytes] = None) -> None:
+    async def authenticate(self, remote_pubkey: Optional[bytes] = None) -> None:
         LOGGER.debug("Attempting login for %s", self._address)
         async with self._lock:
             if self._state == STATE_READY:
                 return
             if self._sesame_token is None:
-                await self._do_login(remote_pubkey)
+                await self._do_authenticate(remote_pubkey)
             await self._logged_in.wait()
 
-    async def _do_login(self, remote_pubkey: Optional[bytes] = None) -> None:
+    async def _do_authenticate(self, remote_pubkey: Optional[bytes] = None) -> None:
         if remote_pubkey:
             self._sesame_pk = remote_pubkey
 
@@ -237,7 +237,7 @@ class SesameDevice:
                 return
             self._sesame_token = publish.payload
             LOGGER.debug("Received sesame token, logging in")
-            await self._do_login()
+            await self._do_authenticate()
         elif publish.cmdItCode == BleItemCode.mechStatus:
             last_locked = self._mech_status.isLocked() if self._mech_status else None
             self._mech_status = CHSesame2MechStatus(rawdata=publish.payload)
