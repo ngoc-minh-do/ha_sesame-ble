@@ -100,6 +100,8 @@ def _scan_sesame_devices(hass) -> list[dict[str, Any]]:
         if result is not None:
             devices.append(result)
 
+    devices.sort(key=lambda d: d["rssi"], reverse=True)
+
     LOGGER.info("BLE scan: %d Sesame device(s) found", len(devices))
     return devices
 
