@@ -1,6 +1,6 @@
 """Constants for the Sesame BLE integration."""
 
-from enum import Enum, auto
+from enum import Enum
 
 DOMAIN = "sesame_ble"
 
@@ -18,11 +18,6 @@ LOGIN_TIMEOUT = 8
 SERVICE_UUID = "0000fd81-0000-1000-8000-00805f9b34fb"
 TX_UUID = "16860002-a5ae-9856-b6d3-dbb4c676993e"
 RX_UUID = "16860003-a5ae-9856-b6d3-dbb4c676993e"
-
-
-class CHDeviceLoginStatus(Enum):
-    Login = auto()
-    UnLogin = auto()
 
 
 class BleItemCode(Enum):

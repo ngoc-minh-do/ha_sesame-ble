@@ -6,8 +6,9 @@ from typing import Any
 
 from homeassistant.components.lock import LockEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import SesameCoordinator
@@ -23,63 +24,44 @@ async def async_setup_entry(
     async_add_entities([SesameBleLock(coordinator, entry)])
 
 
-class SesameBleLock(LockEntity):
+class SesameBleLock(CoordinatorEntity[SesameCoordinator], LockEntity):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: SesameCoordinator, entry: ConfigEntry) -> None:
-        self._coordinator = coordinator
-        self._entry = entry
+        super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_lock"
         self._attr_device_info = get_device_info(coordinator, entry)
         self._attr_name = "Lock"
 
     @property
-    def available(self) -> bool:
-        return self._coordinator.available
-
-    @property
     def is_locked(self) -> bool | None:
-        status = self._coordinator.mech_status
-        if status is None:
+        data = self.coordinator.data
+        if data is None or data.mech_status is None:
             return None
-        return status.isLocked()
+        return data.mech_status.isLocked()
 
     @property
     def is_locking(self) -> bool:
-        status = self._coordinator.mech_status
-        if status is None:
+        data = self.coordinator.data
+        if data is None or data.mech_status is None:
             return False
-        target = status.getTarget()
-        settings = self._coordinator.mech_settings
-        if settings is None:
+        target = data.mech_status.getTarget()
+        if data.mech_settings is None:
             return False
-        return target == settings.getLockPosition() and not status.isInLockRange()
+        return target == data.mech_settings.getLockPosition() and not data.mech_status.isInLockRange()
 
     @property
     def is_unlocking(self) -> bool:
-        status = self._coordinator.mech_status
-        if status is None:
+        data = self.coordinator.data
+        if data is None or data.mech_status is None:
             return False
-        target = status.getTarget()
-        settings = self._coordinator.mech_settings
-        if settings is None:
+        target = data.mech_status.getTarget()
+        if data.mech_settings is None:
             return False
-        return target == settings.getUnlockPosition() and not status.isInUnlockRange()
+        return target == data.mech_settings.getUnlockPosition() and not data.mech_status.isInUnlockRange()
 
     async def async_lock(self, **kwargs: Any) -> None:
-        await self._coordinator.lock()
+        await self.coordinator.lock()
 
     async def async_unlock(self, **kwargs: Any) -> None:
-        await self._coordinator.unlock()
-
-    @callback
-    def _on_coordinator_update(self) -> None:
-        self.async_schedule_update_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        await super().async_added_to_hass()
-        self._coordinator.add_update_callback(self._on_coordinator_update)
-
-    async def async_will_remove_from_hass(self) -> None:
-        self._coordinator.remove_update_callback(self._on_coordinator_update)
-        await super().async_will_remove_from_hass()
+        await self.coordinator.unlock()
