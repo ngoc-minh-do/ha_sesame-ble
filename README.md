@@ -1,4 +1,4 @@
-# Sesame 4 (BLE)
+# Sesame BLE
 
 Home Assistant custom integration for [CANDY HOUSE](https://jp.candyhouse.co/) Sesame smart locks via Bluetooth Low Energy. Fully local — no hub or cloud account required.
 
@@ -18,16 +18,16 @@ Home Assistant custom integration for [CANDY HOUSE](https://jp.candyhouse.co/) S
 ```bash
 # Clone into your Home Assistant custom_components directory
 git clone https://github.com/ngoc-minh-do/ha_sesame-ble.git
-cp -r ha_sesame-ble/custom_components/sesame4 /path/to/your/ha-config/custom_components/
+cp -r ha_sesame-ble/custom_components/sesame_ble /path/to/your/ha-config/custom_components/
 ```
 
-Or download the source and copy the `custom_components/sesame4/` folder into your Home Assistant configuration's `custom_components/` directory.
+Or download the source and copy the `custom_components/sesame_ble/` folder into your Home Assistant configuration's `custom_components/` directory.
 
 Restart Home Assistant after copying the files.
 
 ## Setup
 
-1. Go to **Settings** → **Devices & Services** → **Add Integration** → search for **Sesame 4 (BLE)**
+1. Go to **Settings** → **Devices & Services** → **Add Integration** → search for **Sesame BLE**
 2. Home Assistant will scan for nearby Sesame devices. Select your lock from the list.
 3. Enter the **Secret Key (SK)** from your Sesame device:
    - Open the official Sesame app

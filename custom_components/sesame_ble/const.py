@@ -1,8 +1,8 @@
-"""Constants for the Sesame 4 BLE integration."""
+"""Constants for the Sesame BLE integration."""
 
 from enum import Enum, auto
 
-DOMAIN = "sesame4"
+DOMAIN = "sesame_ble"
 
 CONF_ADDRESS = "address"
 CONF_DEVICE_ID = "device_id"
@@ -12,6 +12,8 @@ CONF_REFRESH_INTERVAL = "refresh_interval"
 CONF_MODEL = "model"
 
 DEFAULT_REFRESH_INTERVAL = 0
+
+DEFAULT_MODEL_NAME = "Sesame BLE"
 
 SERVICE_UUID = "0000fd81-0000-1000-8000-00805f9b34fb"
 TX_UUID = "16860002-a5ae-9856-b6d3-dbb4c676993e"

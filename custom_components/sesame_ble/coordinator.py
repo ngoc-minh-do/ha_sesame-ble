@@ -1,4 +1,4 @@
-"""Coordinator for Sesame 4 BLE — connection lifecycle, concurrency, availability."""
+"""Coordinator for Sesame BLE — connection lifecycle, concurrency, availability."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Callable, Optional
 
 from .const import CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL
-from .device import Sesame4Device
+from .device import SesameDevice
 from .helpers import CHSesame2MechSettings, CHSesame2MechStatus
 
 if TYPE_CHECKING:
@@ -21,12 +21,12 @@ LOGGER = logging.getLogger(__name__)
 FAILURE_THRESHOLD = 3
 
 
-class Sesame4Coordinator:
+class SesameCoordinator:
     def __init__(
         self,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        device: Sesame4Device,
+        device: SesameDevice,
     ) -> None:
         self._hass = hass
         self._entry = entry

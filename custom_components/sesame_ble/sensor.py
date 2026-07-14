@@ -1,4 +1,4 @@
-"""Sensor entities for Sesame 4 BLE integration."""
+"""Sensor entities for Sesame BLE integration."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import Sesame4Coordinator
+from .const import DEFAULT_MODEL_NAME, DOMAIN
+from .coordinator import SesameCoordinator
 
 
 async def async_setup_entry(
@@ -21,25 +21,25 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: Sesame4Coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([Sesame4BatterySensor(coordinator, entry)])
+    coordinator: SesameCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([SesameBleBatterySensor(coordinator, entry)])
 
 
-class Sesame4BatterySensor(SensorEntity):
+class SesameBleBatterySensor(SensorEntity):
     _attr_has_entity_name = True
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: Sesame4Coordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: SesameCoordinator, entry: ConfigEntry) -> None:
         self._coordinator = coordinator
         self._entry = entry
         self._attr_unique_id = f"{coordinator.address}_battery"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.address)},
-            "name": "Sesame 4",
+            "name": "Sesame BLE",
             "manufacturer": "CANDY HOUSE",
-            "model": entry.data.get("model", "Sesame 4"),
+            "model": entry.data.get("model", DEFAULT_MODEL_NAME),
         }
         self._attr_name = "Battery"
 

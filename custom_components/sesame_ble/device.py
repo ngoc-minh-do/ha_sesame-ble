@@ -1,4 +1,4 @@
-"""Sesame 4 BLE device - connection, login, lock/unlock operations."""
+"""Sesame BLE device - connection, login, lock/unlock operations."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ STATE_LOGIN = "login"
 STATE_READY = "ready"
 
 
-class Sesame4Device:
+class SesameDevice:
     def __init__(self, address: str, secret_key: str, public_key: str, hass: HomeAssistant) -> None:
         self._address = address
         self._secret_key = bytes.fromhex(secret_key)

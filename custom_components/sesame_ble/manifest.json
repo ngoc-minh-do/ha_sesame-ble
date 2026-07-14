@@ -1,6 +1,6 @@
 {
-    "domain": "sesame4",
-    "name": "Sesame 4 (BLE)",
+    "domain": "sesame_ble",
+    "name": "Sesame BLE",
     "codeowners": [],
     "config_flow": true,
     "dependencies": ["bluetooth"],

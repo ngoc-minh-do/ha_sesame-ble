@@ -1,4 +1,4 @@
-"""Lock entity for Sesame 4 BLE integration."""
+"""Lock entity for Sesame BLE integration."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import Sesame4Coordinator
+from .const import DEFAULT_MODEL_NAME, DOMAIN
+from .coordinator import SesameCoordinator
 
 
 async def async_setup_entry(
@@ -18,22 +18,22 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: Sesame4Coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([Sesame4Lock(coordinator, entry)])
+    coordinator: SesameCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([SesameBleLock(coordinator, entry)])
 
 
-class Sesame4Lock(LockEntity):
+class SesameBleLock(LockEntity):
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: Sesame4Coordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: SesameCoordinator, entry: ConfigEntry) -> None:
         self._coordinator = coordinator
         self._entry = entry
         self._attr_unique_id = f"{coordinator.address}_lock"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.address)},
-            "name": "Sesame 4 Lock",
+            "name": "Sesame BLE Lock",
             "manufacturer": "CANDY HOUSE",
-            "model": entry.data.get("model", "Sesame 4"),
+            "model": entry.data.get("model", DEFAULT_MODEL_NAME),
         }
         self._attr_name = "Lock"
 

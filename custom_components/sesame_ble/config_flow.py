@@ -1,4 +1,4 @@
-"""Config flow for Sesame 4 BLE integration."""
+"""Config flow for Sesame BLE integration."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from .const import (
     DOMAIN,
     SERVICE_UUID,
 )
-from .device import Sesame4Device
+from .device import SesameDevice
 from .helpers import CHProductModel, BLEAdvertisement, decode_sk
 
 LOGGER = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ def _scan_sesame_devices(hass) -> list[dict[str, Any]]:
     return devices
 
 
-class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class SesameBleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     def __init__(self) -> None:
@@ -171,7 +171,7 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if not errors and self._selected_device is not None:
                 return self.async_create_entry(
-                    title=self._selected_device.get("name", "Sesame 4"),
+                    title=self._selected_device.get("name", "Sesame BLE"),
                     data={
                         CONF_ADDRESS: self._selected_device[CONF_ADDRESS],
                         CONF_DEVICE_ID: self._selected_device[CONF_DEVICE_ID],
@@ -204,7 +204,7 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, address: str, secret_key: str, public_key: str
     ) -> dict[str, str]:
         errors: dict[str, str] = {}
-        device = Sesame4Device(address, secret_key, public_key, self.hass)
+        device = SesameDevice(address, secret_key, public_key, self.hass)
 
         try:
             await device.connect_and_login()
@@ -236,10 +236,10 @@ class Sesame4ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
-        return Sesame4OptionsFlow(config_entry)
+        return SesameBleOptionsFlow(config_entry)
 
 
-class Sesame4OptionsFlow(config_entries.OptionsFlow):
+class SesameBleOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._config_entry = config_entry
 

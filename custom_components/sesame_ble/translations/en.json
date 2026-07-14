@@ -2,7 +2,7 @@
     "config": {
         "step": {
             "user": {
-                "title": "Add Sesame 4 Lock",
+                "title": "Add Sesame BLE Lock",
                 "description": "Select your Sesame device from the discovered list.",
                 "data": {
                     "address": "Device"
@@ -33,7 +33,7 @@
     "options": {
         "step": {
             "init": {
-                "title": "Sesame 4 Options",
+                "title": "Sesame BLE Options",
                 "data": {
                     "refresh_interval": "Background refresh interval"
                 }
