@@ -104,27 +104,16 @@ class Sesame4Coordinator:
                 raise
 
     async def initial_connect(self) -> None:
-        try:
-            await self._device.connect_and_login()
-            await asyncio.wait_for(self._device.login(), timeout=15.0)
-        except Exception as exc:
-            raise exc
-        finally:
-            await self._device.disconnect()
+        await self._device.connect_and_login()
+        await asyncio.wait_for(self._device.login(), timeout=15.0)
 
     async def lock(self, tag: str = "HA") -> None:
-        try:
-            await self._ensure_connected()
-            await self._device.lock(tag)
-        finally:
-            pass
+        await self._ensure_connected()
+        await self._device.lock(tag)
 
     async def unlock(self, tag: str = "HA") -> None:
-        try:
-            await self._ensure_connected()
-            await self._device.unlock(tag)
-        finally:
-            pass
+        await self._ensure_connected()
+        await self._device.unlock(tag)
 
     async def refresh_status(self) -> None:
         if self._connection_lock.locked():
@@ -135,9 +124,6 @@ class Sesame4Coordinator:
             await self._ensure_connected()
         except Exception:
             LOGGER.debug("refresh_status: failed")
-            return
-        finally:
-            await self._device.disconnect()
 
     def start_periodic_refresh(self) -> None:
         from homeassistant.helpers.event import async_track_time_interval
