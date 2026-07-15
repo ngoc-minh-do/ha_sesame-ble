@@ -4,7 +4,7 @@ Home Assistant custom integration for [CANDY HOUSE](https://jp.candyhouse.co/) S
 
 ## Supported Devices
 
-- Sesame 4
+- Sesame 4 (JP)
 
 ## Requirements
 
@@ -13,12 +13,22 @@ Home Assistant custom integration for [CANDY HOUSE](https://jp.candyhouse.co/) S
 
 ## Installation
 
+### HACS (Recommended)
+
+[![Open your Home Assistant instance and open the HACS repository.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ngoc-minh-do&repository=ha-sesame-ble&category=integration)
+
+Or manually in HACS:
+
+1. Open HACS → **Integrations** → **⋮** (menu) → **Custom repositories**
+2. Paste `https://github.com/ngoc-minh-do/ha-sesame-ble` and select **Integration**
+3. Search for **Sesame BLE** and install
+4. Restart Home Assistant
+
 ### Manual
 
 ```bash
-# Clone into your Home Assistant custom_components directory
-git clone https://github.com/ngoc-minh-do/ha_sesame-ble.git
-cp -r ha_sesame-ble/custom_components/sesame_ble /path/to/your/ha-config/custom_components/
+git clone https://github.com/ngoc-minh-do/ha-sesame-ble.git
+cp -r ha-sesame-ble/custom_components/sesame_ble /path/to/your/ha-config/custom_components/
 ```
 
 Or download the source and copy the `custom_components/sesame_ble/` folder into your Home Assistant configuration's `custom_components/` directory.
