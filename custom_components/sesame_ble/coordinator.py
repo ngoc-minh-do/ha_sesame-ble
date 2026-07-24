@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class SesameState:
     mech_status: CHSesame2MechStatus | None
     mech_settings: CHSesame2MechSettings | None
@@ -35,7 +35,6 @@ class SesameCoordinator(DataUpdateCoordinator[SesameState]):
         device: SesameDevice,
     ) -> None:
         self._device = device
-
         self._connection_lock = asyncio.Lock()
 
         super().__init__(
@@ -91,6 +90,7 @@ class SesameCoordinator(DataUpdateCoordinator[SesameState]):
         await self._device.unlock(tag)
 
     def start_periodic_refresh(self) -> None:
+        assert self.config_entry is not None
         interval_minutes = self.config_entry.options.get(
             CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL
         )

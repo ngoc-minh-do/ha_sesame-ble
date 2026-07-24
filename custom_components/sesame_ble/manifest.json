@@ -8,7 +8,7 @@
     ],
     "codeowners": ["@ngoc-minh-do"],
     "config_flow": true,
-    "dependencies": ["bluetooth"],
+    "dependencies": ["bluetooth_adapters"],
     "documentation": "https://github.com/ngoc-minh-do/ha-sesame-ble",
     "iot_class": "local_push",
     "issue_tracker": "https://github.com/ngoc-minh-do/ha-sesame-ble/issues",

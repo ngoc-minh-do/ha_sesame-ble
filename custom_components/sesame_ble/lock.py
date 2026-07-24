@@ -5,33 +5,33 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.lock import LockEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from . import SesameConfigEntry
 from .coordinator import SesameCoordinator
 from .helpers import get_device_info
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: SesameConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SesameCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     async_add_entities([SesameBleLock(coordinator, entry)])
 
 
 class SesameBleLock(CoordinatorEntity[SesameCoordinator], LockEntity):
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: SesameCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: SesameCoordinator, entry: SesameConfigEntry
+    ) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_lock"
         self._attr_device_info = get_device_info(coordinator, entry)
-        self._attr_name = "Lock"
 
     @property
     def is_locked(self) -> bool | None:

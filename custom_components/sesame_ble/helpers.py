@@ -1,8 +1,10 @@
 """Protocol helpers: mech status, BLE packet framing, product model, device info."""
 
+from __future__ import annotations
+
 import base64
 import uuid
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Union
 
 from .const import (
     BleCmdResultCode,
@@ -33,7 +35,7 @@ class CHSesame2MechStatus:
         self._data = data
         self._batteryVoltage = int.from_bytes(data[0:2], "little") * 7.2 / 1023
         _raw_target = int.from_bytes(data[2:4], "little", signed=True)
-        self._target: Optional[int] = (
+        self._target: int | None = (
             None if _raw_target == -32768 else int(_raw_target * 360 / 1024)
         )
         self._position = int(
@@ -54,7 +56,7 @@ class CHSesame2MechStatus:
 
         if cur_vol >= list_vol[0]:
             return 100
-        elif cur_vol <= list_vol[-1]:
+        if cur_vol <= list_vol[-1]:
             return 0
 
         for i in range(len(list_vol) - 1):
@@ -64,7 +66,7 @@ class CHSesame2MechStatus:
 
         return 0
 
-    def getTarget(self) -> Optional[int]:
+    def getTarget(self) -> int | None:
         return self._target
 
     def getPosition(self) -> int:
@@ -82,7 +84,7 @@ class CHSesame2MechStatus:
     def isBatteryCritical(self) -> bool:
         return self._isBatteryCritical
 
-    def isLocked(self) -> Optional[bool]:
+    def isLocked(self) -> bool | None:
         if self._isInLockRange:
             return True
         if self._isInUnlockRange:
@@ -138,7 +140,7 @@ class CHProductModel:
         self._product_type = product_type
 
     @classmethod
-    def getByValue(cls, val: int) -> "CHProductModel":
+    def getByValue(cls, val: int) -> CHProductModel:
         return cls(val)
 
     @property
@@ -177,7 +179,9 @@ class BLEAdvertisement:
             )
         else:
             try:
-                self._deviceId = uuid.UUID(bytes=base64.b64decode(dev.name + "=="))
+                self._deviceId = uuid.UUID(
+                    bytes=base64.b64decode((dev.name or "") + "==")
+                )
             except Exception:
                 self._deviceId = None
 
@@ -186,7 +190,7 @@ class BLEAdvertisement:
         return self._address
 
     @property
-    def device(self):
+    def device(self) -> BLEDevice:
         return self._device
 
     @property
@@ -194,7 +198,7 @@ class BLEAdvertisement:
         return self._rssi
 
     @property
-    def deviceId(self) -> Optional[uuid.UUID]:
+    def deviceId(self) -> uuid.UUID | None:
         return self._deviceId
 
     @property
@@ -221,7 +225,7 @@ class BleTransmitter:
         self._chunks = [data[i : i + self.MTU] for i in range(0, len(data), self.MTU)]
         self._is_first = True
 
-    def getChunk(self) -> Optional[bytes]:
+    def getChunk(self) -> bytes | None:
         if not self._chunks:
             return None
 
@@ -248,9 +252,7 @@ class BleReceiver:
     def __init__(self) -> None:
         self._buffer = bytearray()
 
-    def feed(
-        self, data: bytes
-    ) -> Tuple[Optional[BleCommunicationType], Optional[bytes]]:
+    def feed(self, data: bytes) -> tuple[BleCommunicationType | None, bytes | None]:
         header = data[0]
         is_start = header & 1
         comm_type = header >> 1

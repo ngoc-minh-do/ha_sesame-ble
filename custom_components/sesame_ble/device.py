@@ -1,18 +1,14 @@
-"""Sesame BLE device - connection, authentication, lock/unlock operations."""
+"""Sesame BLE device — connection, authentication, lock/unlock operations."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import algorithms
-from cryptography.exceptions import InvalidTag
-
-if TYPE_CHECKING:
-    from bleak import BleakClient
-    from homeassistant.core import HomeAssistant
 
 from .const import (
     RX_UUID,
@@ -36,6 +32,10 @@ from .helpers import (
     create_htag,
 )
 
+if TYPE_CHECKING:
+    from bleak import BleakClient
+    from homeassistant.core import HomeAssistant
+
 LOGGER = logging.getLogger(__name__)
 
 STATE_DISCONNECTED = "disconnected"
@@ -51,17 +51,17 @@ class SesameDevice:
         self._address = address
         self._secret_key = bytes.fromhex(secret_key)
         self._sesame_pk: bytes = bytes.fromhex(public_key)
-        self._device_id: Optional[str] = None
+        self._device_id: str | None = None
         self._hass = hass
 
-        self._client = None
-        self._cipher: Optional[BleCipher] = None
-        self._sesame_token: Optional[bytes] = None
+        self._client: BleakClient | None = None
+        self._cipher: BleCipher | None = None
+        self._sesame_token: bytes | None = None
         self._rx_buffer = BleReceiver()
-        self._tx_buffer: Optional[BleTransmitter] = None
+        self._tx_buffer: BleTransmitter | None = None
 
-        self._mech_status: Optional[CHSesame2MechStatus] = None
-        self._mech_settings: Optional[CHSesame2MechSettings] = None
+        self._mech_status: CHSesame2MechStatus | None = None
+        self._mech_settings: CHSesame2MechSettings | None = None
 
         self._state = STATE_DISCONNECTED
         self._callbacks: list[Callable[[], None]] = []
@@ -82,15 +82,15 @@ class SesameDevice:
         return self._session_stale
 
     @property
-    def device_id(self) -> Optional[str]:
+    def device_id(self) -> str | None:
         return self._device_id
 
     @property
-    def mech_status(self) -> Optional[CHSesame2MechStatus]:
+    def mech_status(self) -> CHSesame2MechStatus | None:
         return self._mech_status
 
     @property
-    def mech_settings(self) -> Optional[CHSesame2MechSettings]:
+    def mech_settings(self) -> CHSesame2MechSettings | None:
         return self._mech_settings
 
     def add_update_callback(self, callback: Callable[[], None]) -> None:
@@ -174,7 +174,7 @@ class SesameDevice:
         self._tx_buffer = BleTransmitter(is_cipher, packet_data)
         await self._transmit()
 
-    async def authenticate(self, remote_pubkey: Optional[bytes] = None) -> None:
+    async def authenticate(self, remote_pubkey: bytes | None = None) -> None:
         LOGGER.debug("Attempting login for %s", self._address)
         async with self._lock:
             if self._state == STATE_READY:
@@ -183,7 +183,7 @@ class SesameDevice:
                 await self._do_authenticate(remote_pubkey)
             await self._logged_in.wait()
 
-    async def _do_authenticate(self, remote_pubkey: Optional[bytes] = None) -> None:
+    async def _do_authenticate(self, remote_pubkey: bytes | None = None) -> None:
         if remote_pubkey:
             self._sesame_pk = remote_pubkey
 
